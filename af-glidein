@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 from optparse import OptionParser, OptionGroup
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import platform
 import os
 import errno
@@ -20,7 +20,7 @@ import textwrap
 import multiprocessing
 import uuid
 
-__version__ = "1.5.2"
+__version__ = "2.0.0"
 
 class CondorGlidein(object):
     """
@@ -196,7 +196,7 @@ class CondorGlidein(object):
         distro_major = platform.linux_distribution()[1].split(".",1)[0]
          
         if platform.system() == 'Linux':
-            if any(map( lambda(pat): re.search(pat, distro_name, re.I), ["red ?hat", "scientific", "centos"])):
+            if any([re.search(pat, distro_name, re.I) for pat in ["red ?hat", "scientific", "centos"]]):
                 distro = "RedHat" + distro_major
             elif distro_name in ["Debian"]:
                 distro = "Debian" + distro_major
@@ -225,7 +225,7 @@ class CondorGlidein(object):
         self.log.debug("%s > %s", src, self.condor_tarball)
 
         try:
-            urllib.urlretrieve(src, self.condor_tarball) 
+            urllib.request.urlretrieve(src, self.condor_tarball) 
         except Exception as e:
             self.log.debug(e)
             self.log.error("Failed to retrieve the tarball")
@@ -287,7 +287,7 @@ class CondorGlidein(object):
             self.cleanup()
     
         try:
-            os.chmod(f, 0755)
+            os.chmod(f, 0o755)
             self.log.debug("Set %s as executable", f)
         except Exception as e:
             self.log.error("Couldn't set execute bits on %s: %s", f, e)
@@ -315,7 +315,7 @@ class CondorGlidein(object):
         f.write('exec %s "$@"\n\n' % exec_wrapper)
 
       try:
-          os.chmod(af_env_wrapper, 0755)
+          os.chmod(af_env_wrapper, 0o755)
           self.log.debug("Set %s as executable", af_env_wrapper)
       except Exception as e:
           self.log.error("Couldn't set execute bits on %s: %s", af_env_wrapper, e)
@@ -384,8 +384,8 @@ class CondorGlidein(object):
             RELEASE_DIR             = %s
             GLIDEIN_LOCAL_DIR       = %s 
             MEMORY                  = %s
-            VC3_GLIDEIN_VERSION     = "%s"
-            VC3_GLIDEIN_ID          = "%s"
+            AF_GLIDEIN_VERSION     = "%s"
+            AF_GLIDEIN_ID          = "%s"
         """ % (self.collector, self.lingertime, "TRUE", self.condor_dir, self.glidein_local_dir, self.memory, __version__, self.glidein_id)
 
         config_bits.append(textwrap.dedent(dynamic_config))
@@ -415,9 +415,9 @@ class CondorGlidein(object):
             STARTD_NAME                 = $(GLIDEIN_NAME)
             PUBLISH_OBITUARIES          = FALSE
             RUNBENCHMARKS               = FALSE
-            FACTORY_JOBID               = $(VC3_GLIDEIN_ID)
+            FACTORY_JOBID               = $(AF_GLIDEIN_ID)
 
-            STARTD_ATTRS = $(STARTD_ATTRS) VC3_GLIDEIN_VERSION VC3_GLIDEIN_ID FACTORY_JOBID
+            STARTD_ATTRS = $(STARTD_ATTRS) AF_GLIDEIN_VERSION AF_GLIDEIN_ID FACTORY_JOBID
         """
 
         config_bits.append(textwrap.dedent(static_config))
@@ -491,7 +491,7 @@ class CondorGlidein(object):
                 passpath = self.glidein_local_dir + "/etc"
                 f = self.realize_file(self.passwordfile, passpath) # copy file from http or unix
                 self.password_full_path = f
-                os.chmod(self.password_full_path, 0400)
+                os.chmod(self.password_full_path, 0o400)
                 self.log.debug("Using password file: %s", self.password_full_path)
             except Exception as e:
                 self.log.error("Couldn't get pool password")
@@ -512,32 +512,40 @@ class CondorGlidein(object):
                 self.log.debug("Path to dest dir: %s", tpath)
                 f = self.realize_file(self.tokenfile, tpath) # copy file from http or unix
                 self.token_full_path = f
-                os.chmod(self.token_full_path, 0400)
+                os.chmod(self.token_full_path, 0o400)
                 self.log.debug("Using token file: %s", self.token_full_path)
             except Exception as e:
                 self.log.error("Couldn't get pool token")
                 self.log.debug(e)
                 self.cleanup()
 
+            #token_config = """
+            #    SEC_DEFAULT_ENCRYPTION = REQUIRED
+            #    SEC_CREDENTIAL_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/creds
+            #    CREDD_OAUTH_MODE = True
+            #    TOKENS = True
+            #    SEC_TOKEN_SYSTEM_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/tokens.d
+            #    SEC_TOKEN_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/tokens.d
+            #    SEC_PASSWORD_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/passwords.d
+            #    SEC_DEFAULT_AUTHENTICATION_METHODS = TOKEN,FS
+            #    SEC_CLIENT_AUTHENTICATION_METHODS = TOKEN,FS
+            #    """
             token_config = """
-                SEC_DEFAULT_ENCRYPTION = REQUIRED
+                use security:recommended_v9_0
+                use role:execute
                 SEC_CREDENTIAL_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/creds
-                CREDD_OAUTH_MODE = True
-                TOKENS = True
                 SEC_TOKEN_SYSTEM_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/tokens.d
                 SEC_TOKEN_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/tokens.d
                 SEC_PASSWORD_DIRECTORY = $(GLIDEIN_LOCAL_DIR)/passwords.d
-                SEC_DEFAULT_AUTHENTICATION_METHODS = TOKEN,FS
-                SEC_CLIENT_AUTHENTICATION_METHODS = TOKEN,FS
-                """
+            """
             config_bits.append(textwrap.dedent(token_config))
 
-        # We want to take any VC3_ environment variables and expose them as
+        # We want to take any AF_ environment variables and expose them as
         # classads to the startd    
-        self.log.debug("Exporting VC3 environment variables as classads...")
+        self.log.debug("Exporting AF environment variables as classads...")
         keys = []
-        for k,v in os.environ.items():
-            if "VC3_" in k:
+        for k,v in list(os.environ.items()):
+            if "AF_" in k:
                 self.log.debug("Adding: %s = %s", k,v)
                 cfg = "%s = \"%s\" \n" % (k, v)
                 config_bits.append(textwrap.dedent(cfg))
@@ -668,7 +676,7 @@ class CondorGlidein(object):
             try:
                 # This is a bit tricky, but we exploit the fact that basename()
                 # is simply a string splitter. Could be fixed up to be nicer
-                urllib.urlretrieve(src_file, d)
+                urllib.request.urlretrieve(src_file, d)
                 return d
             except:
                 self.log.error("Cannot retrieve file %s", src_file)
@@ -684,9 +692,9 @@ if __name__ == '__main__':
     
     parser.set_defaults(
             workdir=None,
-            condor_version="8.9.5",
-            condor_urlbase="http://download.virtualclusters.org",
-            collector="condor.virtualclusters.org:9618",
+            condor_version="10.1.1",
+            condor_urlbase="https://research.cs.wisc.edu/htcondor/tarball/10.x/10.1.1/release",
+            collector="head01.af.uchicago.edu:9618",
             ccb=None,
             linger=60 * 60 * 2,  # two hours, in seconds
             auth="token",
@@ -728,7 +736,7 @@ if __name__ == '__main__':
     ggroup.add_option("-p", "--password", action="store", type="string",
          dest="passwordfile", help="HTCondor pool password file")
 
-    ggroup.add_option("-T", "--token", action="store", type="string",
+    ggroup.add_option("-T", "--idtoken", action="store", type="string",
          dest="tokenfile", help="HTCondor pool token file")
 
     ggroup.add_option("-e", "--extra-config", action="store", type="string",
@@ -738,7 +746,7 @@ if __name__ == '__main__':
          dest="wrapper", help="Path to user job wrapper file")
 
     ggroup.add_option("-E", "--af-env", action="store", type="string",
-         dest="af_env", help="Name of environment varible that points to a file with the VC3 environment")
+         dest="af_env", help="Name of environment varible that points to a file with the AF environment")
 
     ggroup.add_option("-P", "--periodic", action="store", type="string",
          dest="periodic", help="Path to user periodic classad hook script")

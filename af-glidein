@@ -158,6 +158,7 @@ class CondorGlidein(object):
             os.mkdir(self.glidein_local_dir + "/passwords.d")
             os.mkdir(self.glidein_local_dir + "/creds")
             os.mkdir(self.glidein_local_dir + "/lock")
+            os.mkdir(self.glidein_local_dir + "/log")
             self.log.debug("Glidein local directory is %s" % self.glidein_local_dir)
         except Exception as e:
             self.log.debug(e)
@@ -197,7 +198,7 @@ class CondorGlidein(object):
          
         if platform.system() == 'Linux':
             if any([re.search(pat, distro_name, re.I) for pat in ["red ?hat", "scientific", "centos"]]):
-                distro = "RedHat" + distro_major
+                distro = "CentOS" + distro_major
             elif distro_name in ["Debian"]:
                 distro = "Debian" + distro_major
             elif distro_name in ["Ubuntu"]:
@@ -406,6 +407,7 @@ class CondorGlidein(object):
             SEC_DEFAULT_INTEGRITY       = REQUIRED
             ALLOW_ADMINISTRATOR         = condor_pool@*/*
             LOCAL_DIR                   = $(GLIDEIN_LOCAL_DIR)
+            LOG                         = $(GLIDEIN_LOCAL_DIR)/log
             LOCK                        = $(GLIDEIN_LOCAL_DIR)/lock
             USE_SHARED_PORT             = TRUE
             SHARED_PORT_ARGS            = -p $RANDOM_INTEGER(9100,9600)
@@ -589,7 +591,7 @@ class CondorGlidein(object):
 
     def start_condor(self):
         self.log.info("Starting condor_master..")
-        cmd = "%s/sbin/condor_master -dyn -f -pidfile %s/master.pid -t" % (self.condor_dir, self.glidein_local_dir)
+        cmd = "%s/sbin/condor_master -f -t" % (self.condor_dir)
         self.condor_master = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         self.masterpid = self.condor_master.pid
         self.mypid = os.getpid()

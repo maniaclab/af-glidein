@@ -1,11 +1,9 @@
-# vc3-glidein
+# af-glidein
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/69cfa4b889b242df977fbce919312fa5)](https://www.codacy.com/app/LincolnBryant/vc3-glidein?utm_source=github.com&utm_medium=referral&utm_content=vc3-project/vc3-glidein&utm_campaign=badger)
-
-Current version: v1.5.2
+Current version: v2.0.0
 
 ```
-Usage: ./vc3-glidein
+Usage: ./af-glidein
 
 Options:
   --version             show program's version number and exit
@@ -21,8 +19,8 @@ Options:
     -r CONDOR_URLBASE, --repo=CONDOR_URLBASE
                         URL containing the HTCondor tarball
     -c COLLECTOR, --collector=COLLECTOR
-                        collector string e.g., condor.virtualclusters.org:9618
-    -C CCB, --ccb=CCB   ccb string e.g., condor.virtualclusters.org:9618
+                        collector string e.g., condor-head.mycluster.local:9618
+    -C CCB, --ccb=CCB   ccb string e.g., condor-head.mycluster.local:9618
     -x LINGER, --lingertime=LINGER
                         idletime in seconds before self-shutdown
     -a AUTH, --auth=AUTH
@@ -33,9 +31,9 @@ Options:
                         Additional configuration
     -W WRAPPER, --wrapper=WRAPPER
                         Path to user job wrapper file
-    -E VC3_ENV, --vc3-env=VC3_ENV
+    -E AF_ENV, --af-env=AF_ENV
                         Name of environment varible that points to a file with
-                        the VC3 environment
+                        the AF environment
     -P PERIODIC, --periodic=PERIODIC
                         Path to user periodic classad hook script
     -t, --partitionable
@@ -50,7 +48,7 @@ Options:
                         Total disk (KiB) in glidein.
     -i GLIDEIN_ID, --id=GLIDEIN_ID
                         Unique Glidein ID
-    -T TOKENFILE, --token=TOKENFILE
+    -T TOKENFILE, --idtoken=TOKENFILE
                         HTCondor pool token file
 
 

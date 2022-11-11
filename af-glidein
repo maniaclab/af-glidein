@@ -38,7 +38,7 @@ class CondorGlidein(object):
                     workdir=None,
                     noclean=None,
                     exec_wrapper=None,
-                    vc3_env=None,
+                    af_env=None,
                     startd_cron=None,
                     auth=None,
                     passwordfile=None,
@@ -96,8 +96,8 @@ class CondorGlidein(object):
         if startd_cron is not None:
             self.startd_cron = self.copy_to_exec(startd_cron)
 
-        if vc3_env is not None:
-            self.vc3_env_wrapper = self.create_vc3_wrapper(vc3_env)
+        if af_env is not None:
+            self.af_env_wrapper = self.create_af_wrapper(af_env)
        
         if self.memory is None:
             self.calculate_memory()
@@ -294,33 +294,33 @@ class CondorGlidein(object):
 
         return f
 
-    def create_vc3_wrapper(self, vc3_env):
-      self.log.debug("Creating vc3 wrapper")
+    def create_af_wrapper(self, af_env):
+      self.log.debug("Creating af wrapper")
 
       exec_wrapper = ''
       if hasattr(self, 'exec_wrapper'):
         exec_wrapper = self.exec_wrapper
 
       try:
-        vc3_env_file = os.getenv(vc3_env)
+        af_env_file = os.getenv(af_env)
       except Exception as e:
-        self.log.error("Couldn't read environment variable %s", vc3_env)
+        self.log.error("Couldn't read environment variable %s", af_env)
       
-      self.vc3_env_file = self.copy_to_exec(vc3_env_file)
-      vc3_env_wrapper = os.path.join(os.path.dirname(self.vc3_env_file), 'vc3_env_wrapper')
+      self.af_env_file = self.copy_to_exec(af_env_file)
+      af_env_wrapper = os.path.join(os.path.dirname(self.af_env_file), 'af_env_wrapper')
 
-      with open(vc3_env_wrapper, 'w') as f:
+      with open(af_env_wrapper, 'w') as f:
         f.write("#! /bin/sh\n\n")
-        f.write(". %s\n\n" % vc3_env_file)
+        f.write(". %s\n\n" % af_env_file)
         f.write('exec %s "$@"\n\n' % exec_wrapper)
 
       try:
-          os.chmod(vc3_env_wrapper, 0755)
-          self.log.debug("Set %s as executable", vc3_env_wrapper)
+          os.chmod(af_env_wrapper, 0755)
+          self.log.debug("Set %s as executable", af_env_wrapper)
       except Exception as e:
-          self.log.error("Couldn't set execute bits on %s: %s", vc3_env_wrapper, e)
+          self.log.error("Couldn't set execute bits on %s: %s", af_env_wrapper, e)
 
-      return vc3_env_wrapper
+      return af_env_wrapper
 
         
     def cleanup(self):
@@ -459,8 +459,8 @@ class CondorGlidein(object):
                 config_bits.append(pc)
 
         wrapper = None
-        if hasattr(self, 'vc3_env_wrapper'):
-          wrapper = self.vc3_env_wrapper
+        if hasattr(self, 'af_env_wrapper'):
+          wrapper = self.af_env_wrapper
         elif hasattr(self, 'exec_wrapper'):
           wrapper = self.exec_wrapper
 
@@ -679,7 +679,7 @@ class CondorGlidein(object):
 
 if __name__ == '__main__':
 
-    usage = "./vc3-glidein"
+    usage = "./af-glidein"
     parser = OptionParser(usage, version="%prog " + __version__ )
     
     parser.set_defaults(
@@ -694,7 +694,7 @@ if __name__ == '__main__':
             token=None,
             noclean=False,
             exec_wrapper=None,
-            vc3_env=None,
+            af_env=None,
             extra_config=None,
             loglevel=20)
              
@@ -737,8 +737,8 @@ if __name__ == '__main__':
     ggroup.add_option("-W", "--wrapper", action="store", type="string",
          dest="wrapper", help="Path to user job wrapper file")
 
-    ggroup.add_option("-E", "--vc3-env", action="store", type="string",
-         dest="vc3_env", help="Name of environment varible that points to a file with the VC3 environment")
+    ggroup.add_option("-E", "--af-env", action="store", type="string",
+         dest="af_env", help="Name of environment varible that points to a file with the VC3 environment")
 
     ggroup.add_option("-P", "--periodic", action="store", type="string",
          dest="periodic", help="Path to user periodic classad hook script")
@@ -801,7 +801,7 @@ if __name__ == '__main__':
         workdir=options.workdir,
         loglevel=options.loglevel,
         exec_wrapper=options.wrapper,
-        vc3_env=options.vc3_env,
+        af_env=options.af_env,
         startd_cron=options.periodic,
         auth=options.auth,
         passwordfile=options.passwordfile,

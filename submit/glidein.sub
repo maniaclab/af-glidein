@@ -1,0 +1,9 @@
+universe = vanilla
+executable = glidein.sh
+output = logs/$(Cluster).$(Process).out
+error = logs/$(Cluster).$(Process).err
+log = logs/$(Cluster).log
+RequestMemory = 16384
+RequestCpus = 8
++AccountingGroup="group_connect.ciconnect.lincolnb"
+queue

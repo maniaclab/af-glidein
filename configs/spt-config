@@ -1,1 +1,0 @@
-START = ((ProjectName =?= "SouthPoleTelescope") || (ProjectName =?= "spt") || (ProjectName =?= "spt-all") || (ProjectName =?= "spt.all")) 

@@ -7,9 +7,8 @@ log = /home/af_condor/af-glidein/logs/$(Cluster).log
 should_transfer_files = YES
 transfer_input_files = /home/af_condor/af-glidein/pool_password, /home/af_condor/af-glidein/pool_token, /home/af_condor/af-glidein/api_token
 RequestMemory = 49152
-RequestCpus = 8
+RequestCpus = 12
 +AccountingGroup="group_atlas.analy.af"
 requirements = regexp("^uct2",TARGET.Machine,"IM") =?= true && HasDocker =?= true
-environment = "_CONDOR_DOCKER_VOLUME_DIR_SCRATCH=/scratch:/scratch:shared _CONDOR_DOCKER_VOLUME_DIR_CVMFS=/cvmfs:/cvmfs:ro _CONDOR_HAS_CVMFS=TRUE DOCKER_HOST=unix:///shared/docker.sock _CONDOR_TRUST_UID_DOMAIN=TRUE _CONDOR_UID_DOMAIN=af.uchicago.edu _CONDOR_MEMORY=49152 _CONDOR_K8S_CPU=8"
-#environment = "_CONDOR_DOCKER_DROP_ALL_CAPABILITIES=false _CONDOR_DOCKER_VOLUME_DIR_SCRATCH=/scratch:/scratch:shared _CONDOR_DOCKER_VOLUME_DIR_CVMFS=/cvmfs:/cvmfs:ro _CONDOR_HAS_CVMFS=TRUE DOCKER_HOST=unix:///shared/docker.sock _CONDOR_TRUST_UID_DOMAIN=TRUE _CONDOR_UID_DOMAIN=af.uchicago.edu _CONDOR_MEMORY=49152 _CONDOR_K8S_CPU=8"
+environment = "_CONDOR_DOCKER_VOLUME_DIR_SCRATCH=/scratch:/scratch:shared _CONDOR_DOCKER_VOLUME_DIR_CVMFS=/cvmfs:/cvmfs:ro _CONDOR_HAS_CVMFS=TRUE DOCKER_HOST=unix:///shared/docker.sock _CONDOR_TRUST_UID_DOMAIN=TRUE _CONDOR_UID_DOMAIN=af.uchicago.edu _CONDOR_MEMORY=49152 _CONDOR_K8S_CPU=12"
 queue 1

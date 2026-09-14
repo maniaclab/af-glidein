@@ -6,8 +6,8 @@ GLIDEIN_MAX_IDLE=10
 GLIDEIN_PER_ROUND=10
 
 
-USER_SCHEDDS="head01.af.uchicago.edu"
-POOL="head01.af.uchicago.edu"
+USER_SCHEDDS="head04.af.uchicago.edu"
+POOL="head04.af.uchicago.edu"
 
 GLIDEIN_SUBMIT_FILE="/home/af_condor/af-glidein/submit/glidein.sub"
 
